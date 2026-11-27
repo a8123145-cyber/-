@@ -7,35 +7,28 @@ public class SimulationResponse {
     private String fundName;
     private double mu;
     private double sigma;
-    private int trials;
     private List<YearlyPoint> series;
-    private double finalP90;
     private double finalP70;
     private double finalP50;
     private double finalP30;
     private double finalP10;
     private double finalPrincipal;
-    private double totalWithdrawals;
-    private double achievementRate; // 運用なし(元本)を上回る確率 (%)
 
     public static class YearlyPoint {
         private int year;
         private int age;
-        private double p90;
         private double p70;
         private double p50;
         private double p30;
         private double p10;
         private double principal;
         private double eventWithdrawal;
-        private String eventLabels;
+        private String eventShortLabel;
 
         public int getYear() { return year; }
         public void setYear(int year) { this.year = year; }
         public int getAge() { return age; }
         public void setAge(int age) { this.age = age; }
-        public double getP90() { return p90; }
-        public void setP90(double p90) { this.p90 = p90; }
         public double getP70() { return p70; }
         public void setP70(double p70) { this.p70 = p70; }
         public double getP50() { return p50; }
@@ -48,8 +41,8 @@ public class SimulationResponse {
         public void setPrincipal(double principal) { this.principal = principal; }
         public double getEventWithdrawal() { return eventWithdrawal; }
         public void setEventWithdrawal(double eventWithdrawal) { this.eventWithdrawal = eventWithdrawal; }
-        public String getEventLabels() { return eventLabels; }
-        public void setEventLabels(String eventLabels) { this.eventLabels = eventLabels; }
+        public String getEventShortLabel() { return eventShortLabel; }
+        public void setEventShortLabel(String eventShortLabel) { this.eventShortLabel = eventShortLabel; }
     }
 
     public String getFundId() { return fundId; }
@@ -60,12 +53,8 @@ public class SimulationResponse {
     public void setMu(double mu) { this.mu = mu; }
     public double getSigma() { return sigma; }
     public void setSigma(double sigma) { this.sigma = sigma; }
-    public int getTrials() { return trials; }
-    public void setTrials(int trials) { this.trials = trials; }
     public List<YearlyPoint> getSeries() { return series; }
     public void setSeries(List<YearlyPoint> series) { this.series = series; }
-    public double getFinalP90() { return finalP90; }
-    public void setFinalP90(double finalP90) { this.finalP90 = finalP90; }
     public double getFinalP70() { return finalP70; }
     public void setFinalP70(double finalP70) { this.finalP70 = finalP70; }
     public double getFinalP50() { return finalP50; }
@@ -76,8 +65,4 @@ public class SimulationResponse {
     public void setFinalP10(double finalP10) { this.finalP10 = finalP10; }
     public double getFinalPrincipal() { return finalPrincipal; }
     public void setFinalPrincipal(double finalPrincipal) { this.finalPrincipal = finalPrincipal; }
-    public double getTotalWithdrawals() { return totalWithdrawals; }
-    public void setTotalWithdrawals(double totalWithdrawals) { this.totalWithdrawals = totalWithdrawals; }
-    public double getAchievementRate() { return achievementRate; }
-    public void setAchievementRate(double achievementRate) { this.achievementRate = achievementRate; }
 }
