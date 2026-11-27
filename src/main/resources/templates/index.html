@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新NISA ライフプラン・資産運用シミュレーター（10,000回モンテカルロ法）</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<header class="app-header">
+    <div class="container header-inner">
+        <div>
+            <span class="badge">過去50年データ補正（比率法2.6）・10,000回GBMモデル</span>
+            <h1>新NISA ライフプラン・資産運用シミュレーター</h1>
+        </div>
+        <div class="step-indicator">
+            <span class="step-pill active" data-step="1">1. 基本条件</span>
+            <span class="step-arrow">›</span>
+            <span class="step-pill" data-step="2">2. 投資スタンス</span>
+            <span class="step-arrow">›</span>
+            <span class="step-pill" data-step="3">3. ライフプラン</span>
+            <span class="step-arrow">›</span>
+            <span class="step-pill" data-step="4">4. 結果分析</span>
+        </div>
+    </div>
+</header>
+
+<main class="container main-content">
+
+    <!-- STEP 1: 基本情報・NISA条件 -->
+    <section id="step-1" class="step-panel active">
+        <div class="card">
+            <h2>Step 1. 基本情報と積立条件の設定</h2>
+            <p class="desc">現在の年齢、運用終了年齢、積立金額、および投資対象ファンド（過去50年データ補正済みパラメータ）を選択してください。</p>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label for="currentAge">現在の年齢（歳）</label>
+                    <div class="range-row">
+                        <input type="range" id="currentAgeRange" min="18" max="65" value="22">
+                        <input type="number" id="currentAge" min="18" max="65" value="22" class="num-input">
+                        <span>歳</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="endAge">運用終了年齢（歳）<small id="yearsLabel">（運用期間：43年間）</small></label>
+                    <div class="range-row">
+                        <input type="range" id="endAgeRange" min="25" max="85" value="65">
+                        <input type="number" id="endAge" min="25" max="85" value="65" class="num-input">
+                        <span>歳</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="initialAmount">初期投資額（万円）</label>
+                    <div class="range-row">
+                        <input type="range" id="initialAmountRange" min="0" max="500" step="10" value="0">
+                        <input type="number" id="initialAmount" min="0" max="1800" step="1" value="0" class="num-input">
+                        <span>万円</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="monthlyAmount">毎月の積立額（万円）<small>（新NISA生涯上限1,800万円自動考慮）</small></label>
+                    <div class="range-row">
+                        <input type="range" id="monthlyAmountRange" min="0.5" max="30" step="0.5" value="3">
+                        <input type="number" id="monthlyAmount" min="0" max="30" step="0.1" value="3" class="num-input">
+                        <span>万円/月</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group mt-20">
+                <label>投資対象ファンドの選択（比率法2.6による50年補正パラメータ適用）</label>
+                <div class="fund-grid" id="fundCards">
+                    <label class="fund-card selected" data-fund="allcountry">
+                        <input type="radio" name="fundId" value="allcountry" checked>
+                        <div class="fund-title">eMAXIS Slim 全世界株式（オール・カントリー）</div>
+                        <div class="fund-params">期待収益率 μ̂: <strong>12.232%</strong> / リスク σ̂: <strong>14.532%</strong></div>
+                        <div class="fund-note">世界中の株式に分散投資（基準指標：S&P500指数50年）</div>
+                    </label>
+
+                    <label class="fund-card" data-fund="sp500">
+                        <input type="radio" name="fundId" value="sp500">
+                        <div class="fund-title">eMAXIS Slim 米国株式（S&P500）</div>
+                        <div class="fund-params">期待収益率 μ̂: <strong>13.721%</strong> / リスク σ̂: <strong>15.465%</strong></div>
+                        <div class="fund-note">米国主要500社へ集中投資（基準指標：S&P500指数50年）</div>
+                    </label>
+
+                    <label class="fund-card" data-fund="topix">
+                        <input type="radio" name="fundId" value="topix">
+                        <div class="fund-title">eMAXIS Slim 国内株式（TOPIX）</div>
+                        <div class="fund-params">期待収益率 μ̂: <strong>6.686%</strong> / リスク σ̂: <strong>14.321%</strong></div>
+                        <div class="fund-note">東証プライム市場全体に投資（基準指標：日経平均50年）</div>
+                    </label>
+
+                    <label class="fund-card" data-fund="balanced8">
+                        <input type="radio" name="fundId" value="balanced8">
+                        <div class="fund-title">eMAXIS Slim バランス（8資産均等型）</div>
+                        <div class="fund-params">期待収益率 μ̂: <strong>4.343%</strong> / リスク σ̂: <strong>10.031%</strong></div>
+                        <div class="fund-note">株式・債券・REITの8資産に均等分散（基準指標：日経平均50年）</div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="btn-row right">
+                <button type="button" class="btn btn-primary" id="toStep2">次へ：投資スタンス診断 ›</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- STEP 2: 投資スタンス診断 -->
+    <section id="step-2" class="step-panel">
+        <div class="card">
+            <h2>Step 2. 投資スタンス・リスク許容度の確認</h2>
+            <p class="desc">あなたの運用目的や値動きに対する考え方を選択してください（選択に応じておすすめファンドの提案も確認できます）。</p>
+
+            <div class="q-block">
+                <div class="q-title">Q1. 今回の資産運用の主な目的は何ですか？</div>
+                <div class="radio-list">
+                    <label><input type="radio" name="q_purpose" value="growth" checked> 老後資金や将来の資産をできるだけ大きく育てたい</label>
+                    <label><input type="radio" name="q_purpose" value="balance"> 教育資金や住宅資金など、ライフイベントに備えつつ増やしたい</label>
+                    <label><input type="radio" name="q_purpose" value="stable"> 大きな元本割れは避け、預金より少し高い利回りを狙いたい</label>
+                </div>
+            </div>
+
+            <div class="q-block">
+                <div class="q-title">Q2. 運用中に資産が一時的に20%下落した場合、どう行動しますか？</div>
+                <div class="radio-list">
+                    <label><input type="radio" name="q_drop" value="hold" checked> 長期投資と割り切り、そのまま積立を継続する</label>
+                    <label><input type="radio" name="q_drop" value="nervous"> 不安になるが、様子を見ながら積立を続ける</label>
+                    <label><input type="radio" name="q_drop" value="sell"> 耐えられないので売却して現金に戻すと思う</label>
+                </div>
+            </div>
+
+            <div id="stanceAdvice" class="advice-box">
+                診断アドバイス：長期の積立継続が可能なため、<strong>全世界株式（オルカン）</strong>または<strong>米国株式（S&P500）</strong>による複利効果が期待できます。
+            </div>
+
+            <div class="btn-row between">
+                <button type="button" class="btn btn-secondary" id="backToStep1">‹ Step 1 に戻る</button>
+                <button type="button" class="btn btn-primary" id="toStep3">次へ：ライフプランに関する質問 ›</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- STEP 3: ライフプランに関する質問（Q19〜Q22） -->
+    <section id="step-3" class="step-panel">
+        <div class="card">
+            <h2>Step 3. ライフプランに関する質問</h2>
+            <p class="desc">将来予定しているライフイベントの時期と必要金額（万円）を入力してください。該当する年の運用資産から自動的に取り崩してシミュレーションします。</p>
+
+            <!-- Q19. 結婚資金 -->
+            <div class="event-card" data-event-id="q19">
+                <div class="event-header">
+                    <label class="check-title">
+                        <input type="checkbox" class="ev-enable" id="ev_q19_enable">
+                        <span>Q19. 結婚資金</span>
+                    </label>
+                    <span class="ev-default-tag">目安：327万円</span>
+                </div>
+                <div class="event-body disabled">
+                    <div class="ev-inputs">
+                        <div>
+                            <label>何年後（歳）</label>
+                            <input type="number" class="ev-year" id="ev_q19_year" min="1" max="45" value="6" disabled> 年後
+                            <span class="ev-age-preview">(28歳時)</span>
+                        </div>
+                        <div>
+                            <label>必要金額（万円）</label>
+                            <input type="number" class="ev-amount" id="ev_q19_amount" min="0" max="10000" value="327" disabled> 万円
+                            <button type="button" class="btn-mini btn-preset" data-target="ev_q19_amount" data-val="327" disabled>目安(327万円)を入力</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q20. 住宅の購入・引っ越し -->
+            <div class="event-card" data-event-id="q20">
+                <div class="event-header">
+                    <label class="check-title">
+                        <input type="checkbox" class="ev-enable" id="ev_q20_enable">
+                        <span>Q20. 住宅の購入・引っ越し（頭金・諸費用）</span>
+                    </label>
+                    <span class="ev-default-tag">目安：500万円</span>
+                </div>
+                <div class="event-body disabled">
+                    <div class="ev-inputs">
+                        <div>
+                            <label>何年後（歳）</label>
+                            <input type="number" class="ev-year" id="ev_q20_year" min="1" max="45" value="10" disabled> 年後
+                            <span class="ev-age-preview">(32歳時)</span>
+                        </div>
+                        <div>
+                            <label>必要金額（万円）</label>
+                            <input type="number" class="ev-amount" id="ev_q20_amount" min="0" max="10000" value="500" disabled> 万円
+                            <button type="button" class="btn-mini btn-preset" data-target="ev_q20_amount" data-val="500" disabled>目安(500万円)を入力</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q21-1. 子どもの教育資金（幼稚園〜高校） -->
+            <div class="event-card" data-event-id="q21_1">
+                <div class="event-header">
+                    <label class="check-title">
+                        <input type="checkbox" class="ev-enable" id="ev_q21_1_enable">
+                        <span>Q21-1. 子どもの教育資金（幼稚園〜高校）</span>
+                    </label>
+                    <span class="ev-default-tag">目安：500万円</span>
+                </div>
+                <div class="event-body disabled">
+                    <div class="ev-inputs">
+                        <div>
+                            <label>何年後（歳）</label>
+                            <input type="number" class="ev-year" id="ev_q21_1_year" min="1" max="45" value="15" disabled> 年後
+                            <span class="ev-age-preview">(37歳時)</span>
+                        </div>
+                        <div>
+                            <label>必要金額（万円）</label>
+                            <input type="number" class="ev-amount" id="ev_q21_1_amount" min="0" max="10000" value="500" disabled> 万円
+                            <button type="button" class="btn-mini btn-preset" data-target="ev_q21_1_amount" data-val="500" disabled>目安(500万円)を入力</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q21-2. 子どもの教育資金（大学進学時） -->
+            <div class="event-card" data-event-id="q21_2">
+                <div class="event-header">
+                    <label class="check-title">
+                        <input type="checkbox" class="ev-enable" id="ev_q21_2_enable">
+                        <span>Q21-2. 子どもの教育資金（大学進学時）</span>
+                    </label>
+                    <span class="ev-default-tag">目安：400万円</span>
+                </div>
+                <div class="event-body disabled">
+                    <div class="ev-inputs">
+                        <div>
+                            <label>何年後（歳）</label>
+                            <input type="number" class="ev-year" id="ev_q21_2_year" min="1" max="45" value="22" disabled> 年後
+                            <span class="ev-age-preview">(44歳時)</span>
+                        </div>
+                        <div>
+                            <label>必要金額（万円）</label>
+                            <input type="number" class="ev-amount" id="ev_q21_2_amount" min="0" max="10000" value="400" disabled> 万円
+                            <button type="button" class="btn-mini btn-preset" data-target="ev_q21_2_amount" data-val="400" disabled>目安(400万円)を入力</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q22. その他 -->
+            <div class="event-card" data-event-id="q22">
+                <div class="event-header">
+                    <label class="check-title">
+                        <input type="checkbox" class="ev-enable" id="ev_q22_enable">
+                        <span>Q22. その他（車の買い替え・旅行・独立資金など）</span>
+                    </label>
+                    <span class="ev-default-tag">自由入力</span>
+                </div>
+                <div class="event-body disabled">
+                    <div class="ev-inputs">
+                        <div>
+                            <label>何年後（歳）</label>
+                            <input type="number" class="ev-year" id="ev_q22_year" min="1" max="45" value="12" disabled> 年後
+                            <span class="ev-age-preview">(34歳時)</span>
+                        </div>
+                        <div>
+                            <label>必要金額（万円）</label>
+                            <input type="number" class="ev-amount" id="ev_q22_amount" min="0" max="10000" value="200" disabled> 万円
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="btn-row between">
+                <button type="button" class="btn btn-secondary" id="backToStep2">‹ Step 2 に戻る</button>
+                <button type="button" class="btn btn-accent" id="runSimulationBtn">10,000回シミュレーションを実行する 🚀</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- STEP 4: シミュレーション結果 -->
+    <section id="step-4" class="step-panel">
+        <div class="card">
+            <div class="result-top-bar">
+                <div>
+                    <h2 id="resFundTitle">シミュレーション結果（10,000回試行）</h2>
+                    <p class="desc" id="resParamSubtitle">過去50年データ比率法補正パラメータ適用</p>
+                </div>
+                <div class="zoom-controls">
+                    <span class="zoom-label">表示範囲（少額帯ズーム）：</span>
+                    <button type="button" class="btn-zoom active" data-zoom="all">全期間</button>
+                    <button type="button" class="btn-zoom" data-zoom="10">最初の10年</button>
+                    <button type="button" class="btn-zoom" data-zoom="20">最初の20年</button>
+                </div>
+            </div>
+
+            <!-- サマリーカード -->
+            <div class="summary-grid">
+                <div class="sum-card highlight">
+                    <div class="sum-label">最終資産 中央値（50%点）</div>
+                    <div class="sum-val" id="sumP50">- 万円</div>
+                    <div class="sum-sub" id="sumBeatRate">元本上回り確率：-%</div>
+                </div>
+                <div class="sum-card">
+                    <div class="sum-label">上位30% / 下位30% レンジ</div>
+                    <div class="sum-val-sm" id="sumRange30">- 万円 〜 - 万円</div>
+                    <div class="sum-sub">標準的な運用振れ幅（40%区間）</div>
+                </div>
+                <div class="sum-card">
+                    <div class="sum-label">下位10%（厳しめの相場）</div>
+                    <div class="sum-val-sm" id="sumP10">- 万円</div>
+                    <div class="sum-sub">10回に1回程度の下振れケース</div>
+                </div>
+                <div class="sum-card">
+                    <div class="sum-label">運用なし（現金積立残高）</div>
+                    <div class="sum-val-sm" id="sumPrincipal">- 万円</div>
+                    <div class="sum-sub" id="sumWithdrawals">ライフイベント支出計：0万円</div>
+                </div>
+            </div>
+
+            <!-- グラフ描画エリア -->
+            <div class="chart-wrapper">
+                <canvas id="assetChart"></canvas>
+            </div>
+            <p class="chart-caption">※赤線（上位30%）から水色線（下位10%）の区間を淡色で塗りつぶしています。ライフイベントを設定した年は資産から該当額が取り崩されます。</p>
+
+            <!-- 年次推移テーブル -->
+            <details class="table-details">
+                <summary>年次推移データ一覧（上位30%・中央値・下位30%・下位10%・運用なし）を開く</summary>
+                <div class="table-scroll">
+                    <table class="data-table" id="yearlyTable">
+                        <thead>
+                            <tr>
+                                <th>経過年</th>
+                                <th>年齢</th>
+                                <th>上位30%</th>
+                                <th>中央値</th>
+                                <th>下位30%</th>
+                                <th>下位10%</th>
+                                <th>運用なし</th>
+                                <th>ライフイベント支出</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </details>
+
+            <div class="btn-row between mt-20">
+                <button type="button" class="btn btn-secondary" id="backToStep3">‹ Step 3（ライフプラン）に戻る</button>
+                <button type="button" class="btn btn-outline" id="backToStep1From4">条件を最初からやり直す</button>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<div id="loadingOverlay" class="loading-overlay hidden">
+    <div class="spinner"></div>
+    <p>Spring Bootサーバーで10,000回のモンテカルロシミュレーションを計算中...</p>
+</div>
+
+<script src="/js/app.js"></script>
+</body>
+</html>
